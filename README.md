@@ -915,4 +915,990 @@ Tutto automatico.
 È come usare Docker, ma invece di container, avvii un intero sistema Linux dentro il tuo Mac.
 
 
+
+
+COSA SONO I “mounts:” IN LIMA?
+Pensa alla VM (la macchina virtuale) come a una scatola chiusa.
+Di default, la scatola non vede i file del tuo Mac.
+mounts: significa:
+👉 “Quali cartelle del Mac voglio far vedere dentro la VM?”
+Esempio:
+
+
+
+mounts:
+  - location: "~"
+
+
+Significa:
+➡️ dentro la VM vedrai la tua home del Mac (/Users/tuonome).
+
+❗ Perché nel tutorial ci sono 3 sezioni e nel template solo 1?
+Perché:
+
+il tutorial ti fa vedere un esempio completo
+il template ufficiale GitHub usa solo quello che gli serve
+
+I template NON sono todos → alcuni hanno mounts, altri no.
+
+🌱 2) Le 3 sezioni del tutorial (BEGINNER)
+1️⃣ image
+È “la foto della casa” → il sistema operativo da usare.
+
+Esempio:
+
+
+images:
+  - location: "https://cloud-images…/ubuntu.img"
+
+
+2️⃣ mounts
+Cartelle condivise Mac ↔ VM.
+
+3️⃣ provision
+Script da eseguire subito dopo la creazione della VM.
+È come dire:
+👉 “Appena la casa è pronta, fammi anche questo.”
+
+Esempio:
+
+
+provision:
+  - mode: system
+    script: |
+      sudo apt update
+      sudo apt install -y docker
+
+
+
+
+ 3) COSA SIGNIFICA “exist”?
+Nel tutorial trovi:
+
+
+provision:
+  - when: "exist"
+
+✋ Esatto: significa “se la macchina ESISTE già”.
+Non è “estinguere”, non è spegnere.
+Serve a dire:
+👉 “Esegui questo script solo se la VM esiste già, non la prima volta.”
+Come dire:
+
+first boot (prima accensione) → fai A
+exist (VM già esistente) → fai B
+
+Molto semplice.
+
+
+🌱 4) COSA SIGNIFICA “export”? Perché si usa?
+export è un comando Linux molto semplice:
+👉 Serve a creare una variabile d’ambiente.
+Esempio:
+
+export PATH=$PATH:/usr/local/bin
+
+Significa:
+➡️ “Aggiungi una cartella ai programmi che il sistema può trovare.”
+In Docker serve per dire:
+
+dove si trova il client
+dove salvare il socket
+dove trovare i binari
+
+È come dire:
+👉 “Ehi sistema, ricordati che i comandi Docker sono qui.”
+
+
+
+
+ 5) COSA METTO DENTRO IL FILE YAML (versione BEGINNER)
+Facciamo il file LIMA PIÙ CHIARO POSSIBILE per Docker.
+
+
+
+# ----- IMMAGINE (OS) -----
+images:
+  - location: "https://cloud-images.ubuntu.com/minimal/releases/22.04/release/ubuntu-22.04-minimal-cloudimg-amd64.img"
+
+# ----- CPU E RAM -----
+cpus: 4
+memory: "4GiB"
+disk: "40GiB"
+
+# ----- MOUNT DELLA HOME -----
+mounts:
+  - location: "~"
+    writable: true
+
+# ----- SCRIPT DOPO L’INSTALLAZIONE -----
+provision:
+  - mode: system
+    script: |
+      apt update
+      apt install -y docker.io
+      systemctl enable docker
+      systemctl start docker
+
+
+
+
+🌱 6) “/tmp/lima is no longer mounted by default since Lima v2.0”
+Significa:
+👉 Prima Lima montava automaticamente una cartella temporanea
+👉 Ora NON lo fa più
+👉 Se la vuoi, devi metterla tu nel file YAML
+Esempio:
+
+
+mounts:
+  - location: "{{.GlobalTempDir}}/lima"
+    mountPoint: /tmp/lima
+    writable: true
+
+
+ 7) PERCHÉ NEL TEMPLATE DI DOCKER-ROOTFUL NON C’È “mounts”?
+Perché:
+
+Quella VM serve SOLO a far girare Docker rootful
+Docker gestisce lui le cartelle
+Il template vuole essere minimale
+
+Non è un errore.
+È solo un template speciale
+
+
+
+
+
+
+
+
+
+
+
+
 LIMA USA YAML FILES 
+
+
+Ma come faccio da principiante a sapere quale YAML devo usare?”
+Non devi indovinare niente.
+C’è una regola semplice:
+⭐ REGOLA D’ORO LIMACTL ⭐
+Esegui questo comando:
+
+limactl create --list-templates
+
+E Lima ti mostra tutti i template disponibili.
+Per ognuno ti dice cosa serve.
+Esempio:
+
+docker.yaml → Docker rootless
+docker-rootful.yaml → Docker rootful (come nel tuo caso)
+default.yaml → una VM generale Ubuntu
+k8s.yaml → Kubernetes
+_images/ubuntu-lts → template base per usare Ubuntu
+
+Quindi tu non devi cercare a caso:
+Lima ti dà la lista, e scegli quello che corrisponde al tuo uso.
+
+
+
+
+
+installazione lima e info importanti sul tutorial e documentazione ufficiale:
+
+Link per lima : https://github.com/lima-vm/lima 
+
+Installa brew poi brew install lima lima —help
+
+DOPO VAI IN :
+https://github.com/lima-vm/lima 
+
+
+CERCA CARTELLA TEMPLATES 
+
+E VAI SUL FILE docker-rootful.yaml ma Sarà leggeremente diverso perché più modulare quindi, per la sezione images, vai in templates images , ma non corrispondono i contenuti per rendere la tua macchina virtuale capace di scrivere e modificare la tua directory usi il comando : 
+
+writable : true 
+
+
+se clicchi pulsante destro raw e fai save as link, poi salvi dove vuoi, apri il terminale digiti 
+cat ~ per vedere la tua directory attuale , ma se aggiungi :
+cat ~/dove hai salvato il file(Downloads or Desktop)/file e fai enter , ti apre il file.
+
+cat ~/Desktop/docker-rootful.yaml 
+
+se ti da problema di estensione safari usi mv:
+
+mv ~/Downloads/file.txt ~ Downloads./file.yaml
+
+comandi lima li vedi con : limactl
+
+se vuoi saperne di piu sui comandi :
+
+limactl --help o ancora meglio , per approfondire :
+
+limactl create --help
+
+importanti sono : 
+
+ --name string       Override the instance name
+
+ fornisce il nome della virtual machine che creeremo 
+
+ --tty 
+ 
+ dice a Lima se deve aprire un editor in modo che possiamo modificare quel file che abbiamo scaricato in precedenza in casp riscontriamo dei problemi 
+
+ comando per creare la VM:
+
+ limactl start ~ /Desktop/docker-rootful.yaml --name docker --tty=false 
+
+ --name + nome, nomina la Vm docker non è obbligatorio
+
+ --tty=false lo settiamo su false dal momento che il documento docker-rootful.yaml è scaricato dalla documentazione ufficiale di lima su github, quindi è false perche non avremo bisogno di modificarlo successivamente 
+
+
+
+dopo parte il download, dopo install con brew docker con:
+ brew install docker 
+
+ successivamente incolli dei comandi che appaiono prima del dowload prima di fare brew install docker :
+
+docker context create lima-docker --docker "host=unix:///Users/a616494/.lima/docker/sock/docker.sock"
+docker context use lima-docker
+docker run hello-world
+
+
+
+
+
+ docker context create lima-docker --docker "host=unix:///Users/linkedin/.lima/docker/sock/docker.sock"
+
+
+docker context use lima-docker
+
+
+vediamoli:
+
+ 1) docker context create (+) lima-docker
+
+ questo crea un oggetto creato context, il contesto in docker mappa un percorso a un socket unix del motore socket che abbiamo qui : 
+ 
+ "host=unix:///Users/linkedin/.lima/docker/sock/docker.sock"
+
+
+conveniente che possiamo riusare in seguito che si chiama : lima-docker
+
+
+IMPORTANTE RIGUARDO SOCKET UNIX : 
+
+CHE COS’È UN “UNIX SOCKET”? (spiegato come a un bambino)
+Un Unix socket è come un file speciale usato dai programmi per parlare tra loro.
+Non è un file normale.
+È un “telefono interno”.
+Esempio:
+Docker Engine ha un “telefono” (socket) in:
+/Users/linkedin/.lima/docker/sock/docker.sock
+
+La CLI “docker” dice:
+
+«Ciao, posso parlare con Docker Engine tramite quel telefono?»
+
+E Docker Engine risponde:
+
+«Sì, sono qui!»
+
+👉 È così che Docker CLI parla con la macchina virtuale di Lima.
+
+
+erché servono i comandi “docker context”?
+Perché Docker CLI deve sapere:
+
+DOVE si trova Docker Engine
+QUALE socket deve usare
+QUALE macchina virtuale usare
+
+
+
+
+
+
+
+
+CONCLUSIONE :
+
+
+docker context create lima-docker
+
+Questo comando crea un “profilo” chiamato:
+lima-docker
+
+
+Il profilo dice a Docker CLI:
+
+“Per parlare con Docker Engine, usa questo socket:
+unix:///Users/linkedin/.lima/docker/sock/docker.sock”
+
+È come creare una scorciatoia o un profilo Wi‑Fi.
+
+
+NON FA PARTIRE NULLA
+Non avvia la VM.
+Non avvia Docker.
+Non modifica niente.
+Crea SOLO un “profilo”.
+
+
+
+
+
+
+
+
+2)  docker context use lima-docker
+
+il secondo comando indica a docker i suare il contesto appena creato come predefinito.
+
+se non lo eseguissimo come secondo comando docker penserebbe che il motore docker stia funzionando a slash var slash run slasj docket dot 
+
+
+
+
+
+
+docker context use lima-docker
+Questo dice:
+
+«Da adesso in poi Docker CLI deve usare IL PROFILO che punta alla VM di Lima».
+
+È come dire:
+
+“Tra tutte le reti Wi‑Fi, usa quest
+
+
+
+Cosa succede se NON lo fai?
+Docker CLI di default cerca Docker Engine qui:
+/var/run/docker.sock
+
+Che significa:
+
+“Motore Docker locale installato nel sistema.”
+
+Ma tu non hai Docker Engine installato nel tuo macOS, perché lo stai usando dentro Lima (VM).
+Quindi avresti errori tipo:
+
+
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock
+
+
+
+
+Docker Engine = il motore della macchina
+👉 Docker CLI = il volante
+👉 Docker context = quale macchina stai guidando
+👉 Docker socket = la presa dove colleghi il volante
+
+Esempio “vita reale”
+1️⃣ Fai la macchina nella VM
+(limactl start crea la VM con Docker Engine)
+2️⃣ Crei un profilo di guida
+(docker context create lima-docker)
+3️⃣ Dici: voglio guidare quella macchina
+(docker context use lima-docker)
+4️⃣ Ora il comando docker ps parla alla VM
+e non al sistema host.
+
+
+
+
+3) docker run hello-world
+
+docker hub è una repositori publica dell immagine del container che chiunque puo usare o publicare 
+
+
+
+comando utile: 
+
+export DOCKER_HOST="unix:///Users/linkedin/.lima/docker/sock/docker.sock"
+
+un altro modo per dire a docket dove si trova il socket unix del motore docker, è con la variabile d ambiente 
+
+COMODO PECHE NON SALVA DATI EXTRA, COME FA LA CREAZIONE DEL CONTESTO, QUINDI SI PRESTA MEGLIO PER GLI SCRIPT E INSTALLAZIONI REMOTE, INOLTRE DOCKER CONTEXT E UN COMANDO RECENTE, MENTRE IL SUPPORTO HOST DOCKER ESISTE DA MOLTO. 
+
+PER USARE DOCKER HOST SI ESPORTA.
+
+
+poi possiamo contestarlo deimpostanto e rimuovendo il contesto di context docker cosi: 
+
+docker context remove lima-docker, 
+
+otteniamo me terminale: lima-docker 
+che significa che e stato rimosso.
+
+
+ATTENZIONE LEGGI QUESTO PRIMA PER LA VARIABILE D AMABIENTE : 
+
+LISTA: Setting DOCKER_HOST per Lima (senza Docker Desktop)
+
+Apri il terminale.
+Digita questo comando (usa il TUO username!):
+
+export DOCKER_HOST=unix:///Users/a616494/.lima/docker/sock/docker.sock
+
+
+Controlla che sia attiva:
+
+echo $DOCKER_HOST
+
+
+Mettila permanente nel tuo .zshrc:
+
+echo 'export DOCKER_HOST=unix:///Users/a616494/.lima/docker/sock/docker.sock' >> ~/.zshrc
+
+
+Ricarica la configurazione:
+
+source ~/.zshrc
+
+
+Controlla se Docker parla col daemon:
+
+docker info
+
+
+Testa un container:
+
+docker run --rm hello-world
+
+
+
+
+
+
+vedere l interfaccia del container di docker senza docker desktop usiamo portainer il front end di Docker client :
+
+https://github.com/portainer/portainer:
+
+viene eseguito tra virgolette all interno del container Docker ,
+
+il comando e : 
+
+docker run -d \
+  -p 8000:8000 \
+  -p 9443:9443 \
+  --name portainer \
+  --restart=always \
+  -v $HOME/.lima/docker/sock/docker.sock:/var/run/docker.sock \
+  -v portainer_data:/data \
+  portainer/portainer-ce:latest
+
+dopo vedrai questo id lungo : 
+
+823a1403fd441fd6e0fa76bc7f90f52e1ae04e7707fba4e2a25d95c1d17addd8 
+
+che non corrispondera a quel del tuo schermo
+
+dopo che si vede questo id possiamo eseguire portainer 
+
+
+
+
+
+
+
+
+
+comandi extra terminale : 
+
+ EXTRA: differenze tra -, --, :, /, unix://
+
+
+ Simbolo                            Significato facilissimo
+ -p -v -d                       Flag corti → UNA lettera → 1 trattino.
+ --name --restart                 Flag lunghi → parole intere → 2 trattini.
+ :                                Separatore di collegamento → “cosa sull’host : cosa nel container”.
+ /                            Separatore di cartelle nei percorsi (come Finder).
+ unix://                  Significa: “Sto usando un socket UNIX, non una porta di rete”.
+
+
+
+
+
+
+
+
+
+
+
+
+github documentation lime file  , spiegazione approfondita image NO GRAFICA :
+
+✅ 1. Cosa significa “pre‑packaged virtual machine / image” in italiano?
+Significa semplicemente:
+👉 “Macchina virtuale già pronta all’uso, impacchettata come file immagine.”
+In pratica è:
+
+un file .img, .qcow2 o simili
+che contiene già un sistema operativo installato (Ubuntu, AlmaLinux, ecc.)
+configurato per funzionare dentro Lima/QEMU senza dover installare tutto da zero.
+
+È come scaricare un file ZIP già pronto, che Lima userà per creare la VM.
+
+✅ 2. La sezione images: cosa rappresenta?
+Rappresenta una LISTA di URL dove Lima può scaricare questi file immagine già pronti.
+
+Esempio semplice:
+
+YAMLimages:  - location: "https://example.com/ubuntu-amd64.img"    arch: "x86_64"  - location: "https://example.com/ubuntu-arm64.img"    arch: "aarch64"
+
+Sono solo URL di file .qcow2 / .img.
+
+❗ NON SONO IMMAGINI GRAFICHE
+(Molti principianti lo pensano)
+Sono immagini disco → l’OS già pronto.
+
+✅ 3. Perché ce ne sono tante?
+Perché esistono PIÙ architetture CPU:
+
+x86_64 → PC Intel/AMD
+aarch64 → ARM (Mac M1/M2/M3)
+ppc64le, s390x → server IBM / mainframe
+
+Un template Lima può essere usato su QUALSIASI macchina.
+Quindi serve una voce per ogni architettura.
+
+✅ 4. Come le “unisce”? Risposta: NON le unisce.
+Lima non le unisce.
+Lima fa una cosa molto semplice:
+👉 LE GUARDA UNA PER UNA IN ORDINE
+e sceglie la prima che funziona e ha arch compatibile con la tua macchina.
+Quindi il flusso è:
+
+trovi una voce images
+controlla la voce n°1
+se l’architettura non combacia → la salta
+se l’URL non funziona → la salta
+se il digest non coincide → la salta
+passa a quella successiva
+appena ne trova una valida → STOP, usa quella
+
+È semplicissimo.
+
+🔥 5. Cosa succede se non trova nessuna immagine valida?
+→ Errore, non può creare la VM.
+
+💡 6. Perché nei template “modulari” e “completi” ci sono tante immagini?
+Per robustezza:
+
+prima provano un'immagine versionata (con digest)
+se fallisce → provano la latest
+se la latest non c'è → fallback successivo
+
+È un modo per assicurarsi che almeno una immagine funzioni.
+
+🟦 7. Perché nel tutorial semplice c’è UN SOLO images: nella root?
+Perché quello è un template super basic adatto SOLO a:
+
+Mac ARM (aarch64)
+oppure PC x86
+
+Il tizio del tutorial non vuole complicare la vita, quindi mette solo due immagini.
+
+🟥 8. Perché nel template più professionale ce ne sono molte?
+Perché è un template “riutilizzabile in ogni situazione”, quindi gestisce:
+
+multi‑arch
+fallback
+digest
+fallback delle latest
+caching
+compatibilità vecchie versioni
+
+È normale.
+
+❓ 9. “Se non esiste import, allora come fa a prendere i file modulari?”
+👉 Lima NON ha import.
+Ogni file YAML è indipendente.
+Tu puoi avere:
+
+rootful.yaml
+rootless.yaml
+ubuntu.yaml
+alma.yaml
+
+E lanci quello che vuoi:
+
+limactl start ubuntu.yaml
+
+Non c’è ereditarietà, non c’è import, non c’è include.
+È SOLO YAML.
+
+🧠 10. Esempio SUPER SEMPLICE per principianti
+YAMLimages: 
+ # immagine per PC Intel/AMD  - location: "https://site/os-amd64.img"    arch: "x86_64"  # immagine per Mac ARM  - location: "https://site/os-arm64.img"    arch: "aarch64"  # fallback se le prime non funzionano  - location: "https://site/os-latest.img"Mostra più linee
+
+Su un Mac M2 (aarch64) userà SOLO questa:
+
+YAMLarch: "aarch64"
+
+Su un PC Intel userà questa:
+
+YAMLarch: "x86_64"
+
+Se quella giusta non funziona, userà il fallback con nessun arch.
+
+🟩 11. La frase “pre‑packaged VMs” collegata alla sezione images significa:
+
+“Questa sezione contiene i file delle macchine virtuali preconfezionate che Lima può usare per creare l’istanza.”
+
+Traduzione umana:
+👉 Qui sotto ci sono i file già pronti della macchina virtuale che Lima può scaricare. Lima sceglie quello giusto in base all’architettura della tua macchina.
+
+
+
+
+
+
+
+
+
+
+TEORIA SISTEMI, E ARCHITETTURA CPU:
+
+
+1) Cos’è un OS e cos’è una “immagine disco” (BEGINNER)
+Pensa al computer come a una casa.
+
+
+L’OS (Sistema Operativo) = l’arredamento + regole della casa.
+(porte, finestre, pavimenti, dove sono le cose)
+
+
+L’immagine disco = una foto precisa di com’è quella casa, così quando la crei di nuovo ti viene identica.
+È un file che contiene tutto: OS, programmi, configurazioni.
+
+
+Esempio molto concreto:
+
+file ubuntu.img = una foto della casa “Ubuntu”
+file fedora.img = foto della casa “Fedora”
+
+Tu non installi ogni cosa a mano: Lima scarica la foto e crea la casa già pronta.
+
+✅ 2) Perché esistono PIÙ architetture CPU?
+❓ A) Cos’è la CPU? Perché mi serve? È il motore della macchina?
+SÌ.
+La CPU è il motore del computer.
+
+Il motore decide che benzina usa.
+I programmi sono scritti per funzionare con un certo tipo di motore.
+
+Esempio mega-semplice:
+Ci sono 2 tipi di automobiline:
+
+automobilina A (CPU Intel/AMD → architettura x86_64)
+automobilina B (CPU Apple Silicon → architettura arm64)
+
+Se compro un motore costruito per A, non funziona su B.
+Se compro un gioco (software) per A, non funziona su B.
+➡️ Per questo esistono più architetture.
+Perché esistono motori diversi che usano istruzioni diverse.
+
+
+
+❤️ 3) Cosa significa “multi‑arch, fallback, digest, caching”?
+Te lo spiego come 5 oggetti da cucina:
+● multi‑arch
+👉 Il template può funzionare su motori diversi (Intel e Apple Silicon).
+È come un caricatore universale.
+● fallback
+👉 Se la prima immagine non va, usa la seconda.
+È come dire: “Se non trovi la pizza margherita, prendi la marinara”.
+● digest
+👉 È un "codice unico" che identifica esattamente quella immagine.
+Come il codice a barre sullo yogurt.
+● fallback delle latest
+👉 Se non trova la versione precisa, usa quella “latest” (l'ultima esistente).
+● caching
+👉 Se già l’hai scaricata → NON la riscarica.
+È come quando hai già la pasta in dispensa, non la ricompri.
+❓ Sono OS diversi?
+No.
+Sono modi diversi di gestire lo stesso OS su CPU diverse.
+
+✅ 4) CHE COS’È “arch”?
+“arch” = tipo di motore della CPU.
+I due principali:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+archSignificax86_64motore dei PC Intel/AMDarm64motore degli Apple Silicon (M1, M2, M3…)
+
+✅ 5) Cosa fa limactl start ubuntu.yaml?
+Versione per bambini:
+
+Lima legge lo YAML.
+Dentro vede: “Devo scaricare Ubuntu da questo URL? Di questa architettura? Con questi settaggi?”
+Se l’URL è disponibile → SCARICA l’immagine
+Lima crea la VM usando quella immagine
+Avvia la VM con i parametri del file.
+
+Quindi sì, Lima controlla:
+
+se l’immagine esiste
+se è compatibile con la tua CPU
+se serve un fallback
+se può usare il cache
+
+
+✅ 6) “Intel” e “Apple Silicon” — che materia è?
+Super basic:
+
+
+Intel/AMD = CPU vecchio stile dei PC normali
+→ architettura x86_64
+
+
+Apple Silicon (M1/M2/M3) = CPU nuove dei Mac
+→ architettura arm64
+
+
+Sono motori diversi → non puoi mettere un software scritto per un motore dentro un altro motore senza un adattatore.
+Lima risolve proprio questo!
+
+✅ 7) Perché nel tutorial c’è “mounts:” e nel file su GitHub NO?
+📌 Molti template vecchi includono mounts:
+📌 Il template docker-rootful.yaml non li usa perché:
+
+Docker gestisce da solo i volumi
+Non servono mount manuali
+
+Ecco perché il file Github NON mostra:
+
+YAMLmounts:  - location: "~" 
+
+ - location: "/tmp/lima"
+
+👉 QUESTA parte è del tutorial, NON del template ufficiale.
+I template cambiano nel tempo.
+Non tutti i template Lima hanno tutte le sezioni.
+
+🎉 RIASSUNTO SUPER FACILE
+(per fissare tutto nella testa)
+
+
+Concetto                Spiegazione baby-level
+
+CPU                         il motore del PC
+Architettura                il tipo di motore
+x86_64motore                 Intel/AMD
+arm64                       motore Apple Silicon
+Immagine disco              foto della casa (OS)
+multi‑arch                  funziona su più motori
+fallback                     se uno non va, usa un altro
+digest                        codice a barre dell’immagine
+caching                       non riscarica se già c’è
+mounts                        cartelle condivise tra Mac e VM
+limactl start file.yaml       crea/avvia la VM usando quel file
+
+
+
+
+
+
+
+DIFFERENZE : 
+
+
+
+“Rootful” vs “Rootless” (spiegazione terra‑terra)
+
+Rootful → Docker dentro la VM gira come utente root.
+Pro: massima compatibilità (montaggi di cartelle, porte, iptables, ecc.).
+Contro: un po’ meno “sicuro” a livello teorico.
+Rootless → Docker gira senza privilegi di root.
+Pro: più sicuro.
+Contro: qualche limite (alcuni bind‑mount/porte possono dare noie).
+
+
+Se non sai cosa scegliere: usa rootful. È quello che “funziona più facilmente” in tutti i caSI 
+
+
+
+
+
+
+1) DIFFERENZA TRA Docker Desktop e Docker CLI
+🐳 Docker Desktop (l’app con l’icona blu)
+È un programma grafico che:
+
+installi come una normale app
+ha finestre, toggle, menu
+crea e gestisce una macchina virtuale “magica” per far girare Docker
+fornisce automaticamente il Docker Engine
+si occupa dei percorsi, socket, configurazioni, aggiornamenti, ecc.
+
+👉 Ti fa tutto lui. Tu devi solo aprirlo e usare Docker.
+
+🖥️ Docker CLI (Command‑Line Interface)
+CLI = “interfaccia a linea di comando”.
+In pratica, i comandi:
+docker ps
+docker run ...
+docker images
+docker context ...
+
+La CLI non contiene Docker Engine.
+È solo il telecomando.
+👉 Il Docker Engine DEVE essere installato da qualche parte (nel sistema o in una VM).
+
+🔥 CONCLUSIONE (principiante)
+
+Docker Desktop = App completa + GUI + VM + Engine + CLI
+Docker CLI = Solo comando “docker” → serve un Engine esterno (es. Lima)
+
+
+
+COS'È IL DAEMON — SPIEGAZIONE DEFINITIVA (SUPER BEGINNER)
+Non ne avevamo mai parlato, quindi ricominciamo da ZERO.
+❗ Docker NON è un programma unico
+Docker è fatto da due cose:
+
+A) CLIENT — docker (TUO comando nel terminale)
+
+È solo un telecomando.
+Non fa nulla da solo.
+Invia richieste.
+
+Esempi:
+
+“Ehi daemon, scarica questa immagine”
+“Ehi daemon, crea un container”
+“Ehi daemon, mostrami i container attivi”
+
+
+B) DAEMON — dockerd (il MOTORE vero)
+
+È il “motore” di Docker.
+Lavora dietro le quinte.
+NON lo vedi.
+Crea container, scarica immagini, gestisce reti e volumi.
+
+🧠 E come parlano tra loro?
+Con un socket:
+Un file speciale che funziona come un telefono.
+Esempio:
+/Users/<utente>/.lima/docker/sock/docker.sock
+
+Questo file è il telefono tra CLIENT e DAEMON.
+Quindi:
+
+client = quello che tu digiti
+daemon = quello che LAVORA DAVVERO
+socket = il filo / telefono tra client → daemon
+
+
+
+BUG GRAVE TUTORIAL : 
+
+
++----------------------------+---------------------------------------------+---------------------------------------------------+
+| COSA STAVI FACENDO         | PRIMA (NON FUNZIONAVA)                      | ORA (FUNZIONA)                                     |
++----------------------------+---------------------------------------------+---------------------------------------------------+
+| Avvio VM                   | limactl start docker                        | limactl start docker (OK, questo è giusto)         |
++----------------------------+---------------------------------------------+---------------------------------------------------+
+| Entrare nella VM           | NON lo facevi → restavi sul Mac            | limactl shell docker                               |
++----------------------------+---------------------------------------------+---------------------------------------------------+
+| Dove lanciavi docker run   | SUL MAC                                     | DENTRO LA VM                                       |
++----------------------------+---------------------------------------------+---------------------------------------------------+
+| Docker client stava        | Sul Mac                                     | Dentro la VM                                       |
++----------------------------+---------------------------------------------+---------------------------------------------------+
+| Docker daemon stava        | Dentro la VM                                | Dentro la VM                                       |
++----------------------------+---------------------------------------------+---------------------------------------------------+
+| Conseguenza                | Client ≠ Daemon → mismatch                  | Client = Daemon → combaciano                       |
++----------------------------+---------------------------------------------+---------------------------------------------------+
+| Socket montato             | /Users/.../.lima/.../docker.sock (HOST)     | /var/run/docker.sock (VM)                          |
++----------------------------+---------------------------------------------+---------------------------------------------------+
+| Esito del mount            | “operation not supported”                   | FUNZIONA                                           |
++----------------------------+---------------------------------------------+---------------------------------------------------+
+| Comando docker run         | (sul Mac)                                   | (dentro VM):                                       |
+|                            |                                             | docker run -d \                                    |
+|                            |                                             |   -p 8000:8000 \                                   |
+|                            |                                             |   -p 9443:9443 \                                   |
+|                            |                                             |   -v /var/run/docker.sock:/var/run/docker.sock \   |
+|                            |                                             |   portainer/portainer-ce                           |
++----------------------------+---------------------------------------------+---------------------------------------------------+
+| Stato container            | “Created” (mai partito)                     | “Up” (in esecuzione)                               |
++----------------------------+---------------------------------------------+---------------------------------------------------+
+| Porta 9443                 | Vuota → refused                             | Aperta → LISTEN                                    |
++----------------------------+---------------------------------------------+---------------------------------------------------+
+| Accesso GUI                | NO                                           | https://localhost:9443                             |
++----------------------------+---------------------------------------------+---------------------------------------------------+
+
+
+✅ TABELLA 2 — Confronto preciso dei comandi LIMACTL
+COPIA & INCOLLA QUESTA:
++-------------------------+-------------------------------------------------+----------------------------------------------------+
+| COMANDO                 | SIGNIFICATO                                     | QUANDO USARLO                                      |
++-------------------------+-------------------------------------------------+----------------------------------------------------+
+| limactl start docker    | Avvia la VM Lima chiamata “docker”             | SEMPRE all’inizio, una sola volta                  |
++-------------------------+-------------------------------------------------+----------------------------------------------------+
+| limactl shell docker    | TI ENTRA DENTRO la VM                          | PRIMA di lanciare QUALSIASI comando docker run     |
++-------------------------+-------------------------------------------------+----------------------------------------------------+
+| (MAC) docker ps         | Eseguito sul Mac → parla alla VM tramite       | NON USARE per docker run, va bene solo per ps      |
+|                         | DOCKER_HOST                                     |                                                    |
++-------------------------+-------------------------------------------------+----------------------------------------------------+
+| (VM) docker ps          | Eseguito dentro la VM → usa il daemon reale    | SEMPRE QUANDO LAVORI CON I CONTAINER               |
++-------------------------+-------------------------------------------------+----------------------------------------------------+
+| docker run ...          | SUL MAC → ERRORE                               | DENTRO LA VM → OK                                  |
++-------------------------+-------------------------------------------------+----------------------------------------------------+
+
+
+✅ TABELLA 3 — Errore più importante: DOCKER_HOST
++------------------------+-----------------------------------------------+---------------------------------------------------+
+| COSA                   | PRIMA (ERRORE)                                | ORA (CORRETTO)                                    |
++------------------------+-----------------------------------------------+---------------------------------------------------+
+| DOCKER_HOST            | Impostato sul Mac:                            | Ignorato, inutile                                 |
+|                        | unix:///Users/.../.lima/.../docker.sock       | (Docker nella VM non usa DOCKER_HOST)             |
++------------------------+-----------------------------------------------+---------------------------------------------------+
+| Effetto                | docker run sul Mac monta percorsi SBAGLIATI   | docker run dentro VM monta percorsi GIUSTI        |
++------------------------+-----------------------------------------------+---------------------------------------------------+
+| Risultato              | “operation not supported”                      | Portainer parte                                   |
++------------------------+-----------------------------------------------+---------------------------------------------------+
+
+
+
+
+BUG CON PORTAINER , DOPO COMANDO SU TERMINALE ( VEDI SU )
+
+SU CRHOOME TRUCCO SCRIVI SULLA PAGINA BROWSER A VUOTO CON LA TASTIERA thisisunsafe, e ti sblocca e se non ti appare portainer.io con un form fai restart da terminale con: 
+docker restart portainer 
+
+e rivai sulla port 9443 !
+
+password portainer: Hello, Docker 
+
+cosi identica 
+user : Alessio 
+
+una volta entrato su Portainer: 
+
+poi devi selexionare uno dei due ambienti , ODcker predefiniti icona balena o aggiungi nuovo 
+poi selezioni container e ti apre una schermata in alto a destra hai il bottone aggiungi container cliccalo. E puoi usare il container di nngix 
