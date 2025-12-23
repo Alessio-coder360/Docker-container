@@ -1901,4 +1901,143 @@ user : Alessio
 una volta entrato su Portainer: 
 
 poi devi selexionare uno dei due ambienti , ODcker predefiniti icona balena o aggiungi nuovo 
-poi selezioni container e ti apre una schermata in alto a destra hai il bottone aggiungi container cliccalo. E puoi usare il container di nngix 
+poi selezioni container e ti apre una schermata in alto a destra hai il bottone aggiungi container cliccalo. E puoi usare il container di nngix , chiama il container ngnix, in alto, 
+
+nella sezione image dobbiamo indicare a Portainer da quale immagine del contenitore voglia che venga creato questo contenitore, e Docker in questo caso ha un immagie ufficiale del container NGINX, quindi digitiamo nginx.
+
+poiche nginx è un server web servirà le pagine attraverso la porta TCP 80 per impostazione predefinita, tuttavia poiche nginx verrà eseguito all'interno di un container , non utilizzera la porta 80 sul nostro computer , infatti dovremmo utilizzare qualcosa chiamato port binding per associare la porta una porta sul nostro computer con una porta all'interno del container ??( vedi domanda sotto )
+
+
+
+cosi cliccando sul pulsante :
+
+map additional port 
+
+si apriranno due input 
+
+a sinistra possiamo mettere qualsiasi numero pure superiore a 1024 
+
+a destra va la porta per il container metto 80 , 
+
+alla fine clicco su 
+
+ deploy the container 
+
+
+
+
+perche il container ha una porta ? 
+
+
+risposta : 
+
+) Immagine ≠ Container
+Partiamo da qui, perché è la base di tutto:
+🔹 Un’IMMAGINE (image)
+È come un modello, un template.
+Esempio: l’immagine nginx contiene:
+
+i file di Nginx
+la sua configurazione base
+come avviare Nginx
+
+L’immagine non ha porte, non gira da sola, non fa nulla. È solo un “pacchetto”.
+
+🔹 Un CONTAINER
+È l’istanza dell’immagine, cioè l’immagine che sta girando.
+Tipo:
+
+l’immagine è un "programma"
+il container è quel programma in esecuzione
+
+👉 È solo quando il container gira che ha porte.
+
+🔌 2) Perché un container ha porte?
+Perché al suo interno c’è un’app che deve ascoltare da qualche parte.
+Esempio:
+Nginx dentro il container ascolta sulla porta 80, sempre.
+📌 È una cosa interna, dentro il container:
+Container: porta 80
+
+Questo è deciso dagli sviluppatori dell’immagine.
+Non lo scegli tu.
+
+🌍 3) Perché devi mettere “80” nel campo Container ?
+Perché Portainer ti sta chiedendo:
+
+“Quale porta usa l’app dentro il container?”
+
+E Nginx, come tutti i server web, usa porta 80 (HTTP).
+Quindi sì, il tutorial ha ragione.
+
+🔁 4) Port Mapping = Collegare fuori ↔ dentro
+La sintassi è:
+HOST_PORT  →  CONTAINER_PORT
+
+Esempio:
+
+
+
+
+
+
+
+
+
+
+
+
+
+Host (tuo PC)Container (interno)808080
+Significa:
+
+sulla tua macchina apri http://localhost:8080
+Docker reindirizza verso porta 80 dentro il container
+
+
+🎯 5) Perché si usa proprio “8080” sul lato Host?
+Perché la porta 80 del tuo computer spesso è già occupata o è riservata.
+Quindi si fa una cosa molto comune:
+host: 8080 → container: 80
+
+oppure:
+host: 8000 → container: 80
+host: 3000 → container: 80
+
+Dipende da te.
+
+📌 Esempio super facile
+Tu scrivi:
+Host: 8080  →  Container: 80
+
+Poi apri nel browser:
+http://localhost:8080
+
+E vedi Nginx.
+
+🧠 Schema visivo da beginner
+(Immagine) nginx
+         ↓
+(diventa)
+[ Container Nginx ]
+       |
+       | porta 80 interna
+       ↓
+Docker port mapping
+       ↓
+Tuo PC → porta 8080 → http://localhost:8080
+
+
+✅ Risposta alla tua domanda: “È normale?”
+Sì, è assolutamente normale.
+E funziona così per tutti i container che hanno porte, non solo nginx.
+
+
+se provi a digitare http://localhost:8080 vedrai il welcome di nginx
+
+portainer puo cancellare anche containers 
+
+per rimuovere sezione container spuntare e bottone in alto a destra elimina 
+
+file di compressione per immagini file system docker ,,... come si chiama ? 
+
